@@ -15,11 +15,13 @@ import java.util.Map;
 public class StartMain {
 
     public static void main(String[] args) throws Exception {
-        String excelPath = "E:/用户表.xlsx";
-        if (ReadExcelUtil.checkFile(excelPath)) {
-            Workbook wb = ReadExcelUtil.readExcelObject(excelPath);
+
+        ExcelFile excelFile = new ExcelFile("user", "用户表", "E:/用户表.xlsx");
+
+        if (ReadExcelUtil.checkFile(excelFile.getExcelPath())) {
+            Workbook wb = ReadExcelUtil.readExcelObject(excelFile.getExcelPath());
             List<Map<String, Object>> contentList =  ReadExcelUtil.readExcelContent(wb);
-            System.out.println(contentList.size());
+            Excel2Sc.createSchemeFile(contentList, excelFile);
         }
 
     }
