@@ -19,7 +19,7 @@ public class ReadExcelUtil {
     /**
      * 固定excel第一行字段的顺序
      */
-    private static String[] excelTitle = {"id", "name", "type", "length", "isPK"};
+    private static String[] excelTitle = {"id", "name", "type", "length", "isNull", "isPK"};
 
     /**
      * 根据excel的版本获取操作对象

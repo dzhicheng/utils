@@ -3,6 +3,7 @@ package com.dongzhic.utils.excel2xml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Workbook;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -20,8 +21,22 @@ public class StartMain {
 
         if (ReadExcelUtil.checkFile(excelFile.getExcelPath())) {
             Workbook wb = ReadExcelUtil.readExcelObject(excelFile.getExcelPath());
-            List<Map<String, Object>> contentList =  ReadExcelUtil.readExcelContent(wb);
-            Excel2Sc.createSchemeFile(contentList, excelFile);
+            List<Map<String, Object>> unDefaulExcelList =  ReadExcelUtil.readExcelContent(wb);
+
+            List<Map<String, Object>> defaulExcelList =  new ArrayList<Map<String, Object>>();
+
+            defaulExcelList = ExcelTransformUtils.defaultExcelList(unDefaulExcelList);
+
+            //对ecxel中的数据进行初始化操作,省去接下来判空的步骤
+            if (defaulExcelList !=null && defaulExcelList.size()>0) {
+
+                ExcelTransformUtils.createSchemeFile(unDefaulExcelList, excelFile);
+                ExcelTransformUtils.createSqlFile(unDefaulExcelList, excelFile);
+                ExcelTransformUtils.createHbmFile(unDefaulExcelList, excelFile);
+
+            }
+
+
         }
 
     }
