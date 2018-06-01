@@ -39,7 +39,7 @@ public class ExcelTransformUtils {
 
             rowMap = excelContentList.get(i);
             Element item = entry.addElement("item");
-            item.addAttribute("id", rowMap.get("id")+"");
+            item.addAttribute("id", rowMap.get("id").toString().toUpperCase());
             item.addAttribute("alias", rowMap.get("name")+"");
             item.addAttribute("type", rowMap.get("type")+"");
             //length类型处理，为null时默认长度为50
@@ -174,7 +174,7 @@ public class ExcelTransformUtils {
 
                 if ("1.0".equals(rowMap.get("isPK")+"")) {
                     Element id = clazz.addElement("id");
-                    id.addAttribute("name",rowMap.get("id").toString());
+                    id.addAttribute("name",rowMap.get("id").toString().toUpperCase());
                     if ("string".equals(rowMap.get("type").toString().toLowerCase())){
                         id.addAttribute("type", "java.lang.String");
                     }
@@ -187,7 +187,7 @@ public class ExcelTransformUtils {
                     generator.addAttribute("class", "assigned");
                 } else {
                     Element property = clazz.addElement("property");
-                    property.addAttribute("name", rowMap.get("id").toString());
+                    property.addAttribute("name", rowMap.get("id").toString().toUpperCase());
                     property.addAttribute("length", rowMap.get("length").toString().substring(0, rowMap.get("length").toString().indexOf(".")));
                     if ("string".equals(rowMap.get("type").toString().toLowerCase())){
                         property.addAttribute("type", "java.lang.String");
