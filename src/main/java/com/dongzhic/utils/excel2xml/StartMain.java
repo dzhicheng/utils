@@ -17,22 +17,22 @@ public class StartMain {
 
     public static void main(String[] args) throws Exception {
 
-        ExcelFile excelFile = new ExcelFile("user", "用户表", "E:/用户表.xlsx");
+//        ExcelFile excelFile1 = new ExcelFile("AIO_ANYCHECKTIZHI", "中医体质辨识数据临时表", "E:/bsoft/中医体质辨识1.0.xlsx");
+        ExcelFile excelFile1 = new ExcelFile("AIO_MEASURE", "安测一体机传输数据临时表", "E:/bsoft/一体机接口字段1.0.xlsx");
 
-        if (ReadExcelUtil.checkFile(excelFile.getExcelPath())) {
-            Workbook wb = ReadExcelUtil.readExcelObject(excelFile.getExcelPath());
-            List<Map<String, Object>> unDefaulExcelList =  ReadExcelUtil.readExcelContent(wb);
+        if (ReadExcelUtil.checkFile(excelFile1.getExcelPath())) {
+            Workbook wb = ReadExcelUtil.readExcelObject(excelFile1.getExcelPath());
+            List<Map<String, Object>> unInitExcelList =  ReadExcelUtil.readExcelContent(wb);
+            List<Map<String, Object>> innitExcelList =  new ArrayList<Map<String, Object>>();
 
-            List<Map<String, Object>> defaulExcelList =  new ArrayList<Map<String, Object>>();
-
-            defaulExcelList = ExcelTransformUtils.defaultExcelList(unDefaulExcelList);
+            innitExcelList = ExcelTransformUtils.initExcelList(unInitExcelList);
 
             //对ecxel中的数据进行初始化操作,省去接下来判空的步骤
-            if (defaulExcelList !=null && defaulExcelList.size()>0) {
+            if (innitExcelList !=null && innitExcelList.size()>0) {
 
-                ExcelTransformUtils.createSchemeFile(unDefaulExcelList, excelFile);
-                ExcelTransformUtils.createSqlFile(unDefaulExcelList, excelFile);
-                ExcelTransformUtils.createHbmFile(unDefaulExcelList, excelFile);
+                ExcelTransformUtils.createSchemeFile(innitExcelList, excelFile1);
+                ExcelTransformUtils.createSqlFile(innitExcelList, excelFile1);
+                ExcelTransformUtils.createHbmFile(innitExcelList, excelFile1);
 
             }
 

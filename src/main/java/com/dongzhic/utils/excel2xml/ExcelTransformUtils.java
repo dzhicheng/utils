@@ -40,13 +40,19 @@ public class ExcelTransformUtils {
             rowMap = excelContentList.get(i);
             Element item = entry.addElement("item");
             item.addAttribute("id", rowMap.get("id").toString().toUpperCase());
-            item.addAttribute("alias", rowMap.get("name")+"");
-            item.addAttribute("type", rowMap.get("type")+"");
-            //length类型处理，为null时默认长度为50
-            String length = rowMap.get("length")+"";
-            item.addAttribute("length", "null".equals(length) ? "50" : length.substring(0, length.indexOf(".")));
+            item.addAttribute("alias", rowMap.get("name").toString());
 
-            if ("1.0".equals(rowMap.get("isPK")+"")) {
+            String type = rowMap.get("type").toString();
+            if ("int".equals(type)) {
+                type = "long";
+            }
+            item.addAttribute("type", type);
+            //length类型处理，为null时默认长度为50
+            String length = rowMap.get("length").toString();
+            if (!"".equals(length)) {
+                item.addAttribute("length", length);
+            }
+            if ("1".equals(rowMap.get("isPK").toString())) {
                 item.addAttribute("not-null", "1");
                 item.addAttribute("generator", "assigned");
                 item.addAttribute("pkey", "true");
@@ -98,20 +104,22 @@ public class ExcelTransformUtils {
         for (int i=0; i<excelContentList.size(); i++) {
             rowMap = excelContentList.get(i);
 
-            sql.append(rowMap.get("id").toString());
+            sql.append("  "+rowMap.get("id").toString());
             sql.append(" ");
 
-            if ("string".equals(rowMap.get("type").toString())) {
-                String length = "null".equals(rowMap.get("length")+"") ? "50" : rowMap.get("length").toString();
-                length = length.substring(0, length.indexOf("."));
+            String type = rowMap.get("type").toString();
+            if ("string".equals(type)) {
+                String length = "null".equals(rowMap.get("length").toString()) ? "50" : rowMap.get("length").toString();
                 sql.append("VARCHAR2("+length+")");
-            } else if ("int".equals(rowMap.get("type").toString())) {
+            } else if ("int".equals(type)) {
                 sql.append("NUMBER");
+            } else if ("date".equals(type)) {
+                sql.append("DATE");
             }
-            if ("1.0".equals(rowMap.get("isNull")+"")) {
+            if ("1".equals(rowMap.get("isNull").toString())) {
                 sql.append(" not null");
             }
-            if ("1.0".equals(rowMap.get("isPK")+"")) {
+            if ("1".equals(rowMap.get("isPK").toString())) {
                 pkValue = rowMap.get("id").toString().toUpperCase();
             }
 
@@ -130,7 +138,8 @@ public class ExcelTransformUtils {
 
         sql.append("-- Create/Recreate primary, unique and foreign key constraints \n");
         sql.append("alter table "+excelFile.getTableName()+"\n");
-        sql.append("  add constraint PK_"+excelFile.getTableName().toUpperCase()+" primary key ("+pkValue+"); \n");
+        sql.append("  add constraint PK_"+excelFile.getTableName().toUpperCase()+"_"+pkValue
+                +" primary key ("+pkValue+"); \n");
 
 
         File file = new File("E:/bsoft/"+excelFile.getTableName()+".sql");
@@ -172,27 +181,35 @@ public class ExcelTransformUtils {
             for (int i=0; i<excelContentList.size(); i++) {
                 rowMap = excelContentList.get(i);
 
-                if ("1.0".equals(rowMap.get("isPK")+"")) {
+                if ("1".equals(rowMap.get("isPK").toString())) {
                     Element id = clazz.addElement("id");
                     id.addAttribute("name",rowMap.get("id").toString().toUpperCase());
-                    if ("string".equals(rowMap.get("type").toString().toLowerCase())){
+
+                    String type = rowMap.get("type").toString().toLowerCase();
+                    if ("string".equals(type)){
                         id.addAttribute("type", "java.lang.String");
                     }
-                    if ("int".equals(rowMap.get("type").toString().toLowerCase())) {
-                        id.addAttribute("type", "java.lang.Integer");
+                    if ("int".equals(type)) {
+                        id.addAttribute("type", "java.lang.Long");
                     }
+                    id.addAttribute("length", rowMap.get("length").toString());
                     Element column = id.addElement("column");
-                    column.addAttribute("name", rowMap.get("id").toString());
+                    column.addAttribute("name", rowMap.get("id").toString().toUpperCase());
                     Element generator = id.addElement("generator");
                     generator.addAttribute("class", "assigned");
                 } else {
                     Element property = clazz.addElement("property");
                     property.addAttribute("name", rowMap.get("id").toString().toUpperCase());
-                    property.addAttribute("length", rowMap.get("length").toString().substring(0, rowMap.get("length").toString().indexOf(".")));
-                    if ("string".equals(rowMap.get("type").toString().toLowerCase())){
+                    String type = rowMap.get("type").toString();
+                    if (!"date".equals(type.toLowerCase())) {
+                        property.addAttribute("length", rowMap.get("length").toString());
+                    } else {
+                        property.addAttribute("type", "date");
+                    }
+                    if ("string".equals(type.toLowerCase())){
                         property.addAttribute("type", "java.lang.String");
                     }
-                    if ("int".equals(rowMap.get("type").toString().toLowerCase())) {
+                    if ("int".equals(type.toLowerCase())) {
                         property.addAttribute("type", "java.lang.Integer");
                     }
                 }
@@ -217,32 +234,57 @@ public class ExcelTransformUtils {
     }
 
     /**
-     * 对excel中的空字段进行默认值操作
+     * 对excel中字段进行操作:
+     *  1、去掉字符串两边空格
+     *  2、赋默认值
      * @param excelContentList
      * @return
      */
-    public static List<Map<String, Object>> defaultExcelList (List<Map<String, Object>> excelContentList) {
+    public static List<Map<String, Object>> initExcelList (List<Map<String, Object>> excelContentList) {
 
-        List<Map<String, Object>> resultList = new ArrayList<Map<String, Object>>();
-        Map<String, Object> resultMap = new HashMap<String, Object>(16);
-        Map<String, Object> tempMap = new HashMap<String, Object>();
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        Map<String, Object> tempMap;
 
         for (int i=0 ;i<excelContentList.size(); i++) {
+
+            Map<String, Object> resultMap = new HashMap<>(16);
             tempMap = excelContentList.get(i);
 
             //对id字段名处理,必填
-            if ("null".equals(tempMap.get("id")+"")) {
+            if ("".equals(tempMap.get("id").toString())) {
                 log.error("defaultExcelList failed, 字段名id不能为空");
                 return null;
             } else {
-                resultMap.put("id", tempMap.get("id").toString());
+                resultMap.put("id", tempMap.get("id").toString().trim());
             }
-            //对name字段名称处理
-            resultMap.put("name", "null".equals(tempMap.get("name")+"") ? "" : tempMap.get("name").toString());
-            resultMap.put("type", "null".equals(tempMap.get("type")+"") ? "string" : tempMap.get("type").toString());
-            resultMap.put("length", "null".equals(tempMap.get("length")+"") ? "50" : tempMap.get("length").toString());
-            resultMap.put("isNull", "null".equals(tempMap.get("isNull")+"") ? "0" : tempMap.get("isNull").toString());
-            resultMap.put("idPK", "null".equals(tempMap.get("idPK")+"") ? "0" : tempMap.get("idPK").toString());
+            resultMap.put("name", tempMap.get("name").toString().trim());
+
+            String type = tempMap.get("type").toString().trim();
+            if ("".equals(type)) {
+                type = "string";
+            }
+            resultMap.put("type", type);
+            String length = tempMap.get("length").toString().trim();
+            if ("".equals(length)) {
+                length = "20";
+            } else {
+                length = length.substring(0, length.indexOf("."));
+            }
+            resultMap.put("length", length);
+            String isNull = tempMap.get("isNull").toString();
+            if ("".equals(isNull)) {
+                isNull = "0";
+            } else {
+                isNull = length.substring(0, isNull.indexOf("."));
+            }
+            resultMap.put("isNull", isNull);
+            String isPK = tempMap.get("isPK").toString();
+            if ("".equals(isPK)) {
+                isPK = "0";
+            } else {
+                isPK = length.substring(0, isPK.indexOf("."));
+            }
+            resultMap.put("isPK", isPK);
 
             resultList.add(resultMap);
         }
