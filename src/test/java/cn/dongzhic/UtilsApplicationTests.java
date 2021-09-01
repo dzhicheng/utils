@@ -1,4 +1,4 @@
-package com.dongzhic.utils;
+package cn.dongzhic;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

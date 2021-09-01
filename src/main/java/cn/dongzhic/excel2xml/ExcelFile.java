@@ -1,4 +1,4 @@
-package com.dongzhic.utils.excel2xml;
+package cn.dongzhic.excel2xml;
 
 /**
  * Description:
@@ -13,6 +13,10 @@ public class ExcelFile {
     private String excelPath;
 
     public ExcelFile() {
+    }
+
+    public ExcelFile(String excelPath) {
+        this.excelPath = excelPath;
     }
 
     public ExcelFile(String tableName, String tableMeaning, String excelPath) {
